@@ -1,4 +1,3 @@
 package com.example.livechat.data
 
-class Constants {
-}
+ const val USER_NODE = "user"

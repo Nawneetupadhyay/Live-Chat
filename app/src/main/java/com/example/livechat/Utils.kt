@@ -35,3 +35,8 @@ fun commonProgressBar() {
     }
 }
 
+@Composable
+fun CheckSignIn(navController: NavController, vm : LCViewModel) {
+    val alredySignIn = re@
+}
+
