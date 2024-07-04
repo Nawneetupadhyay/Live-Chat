@@ -72,13 +72,13 @@ val navController = rememberNavController()
                 LoginScreen(vm,navController)
             }
             composable(DestinationScreens.ChatList.route){
-                ChatScreen()
+                ChatScreen(navController,vm)
             }
             composable(DestinationScreens.StatusList.route){
-                StatusScreen()
+                StatusScreen(navController,vm)
             }
             composable(DestinationScreens.Profile.route){
-                ProfileScreen()
+                ProfileScreen(navController,vm)
             }
         }
     }
