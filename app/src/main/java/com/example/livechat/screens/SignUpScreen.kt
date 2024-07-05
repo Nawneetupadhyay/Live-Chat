@@ -27,10 +27,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.livechat.CommonProgressBar
 import com.example.livechat.DestinationScreens
 import com.example.livechat.R
 import com.example.livechat.LCViewModel
-import com.example.livechat.commonProgressBar
 import com.example.livechat.navigateTo
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,7 +125,7 @@ fun SignUpScreen(navController: NavController, vm: LCViewModel) {
 
         }
         if (vm.inProgression.value) {
-            commonProgressBar()
+            CommonProgressBar()
         }
 
     }
