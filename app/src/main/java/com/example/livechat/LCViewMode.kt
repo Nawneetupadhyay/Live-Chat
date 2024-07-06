@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.example.livechat.data.ChatData
 import com.example.livechat.data.Events
 import com.example.livechat.data.USER_NODE
 import com.example.livechat.data.UserData
@@ -21,9 +22,11 @@ class LCViewModel @Inject constructor(
     val storage: FirebaseStorage
 ) : ViewModel() {
     var inProgression = mutableStateOf(false)
+    var inProcessChat = mutableStateOf(false)
     val eventMutableState = mutableStateOf<Events<String>?>(null)
     var signedIn = mutableStateOf(false)
     val userData = mutableStateOf<UserData?>(null)
+    val chats = mutableStateOf<List<ChatData>>(listOf())
     init {
         val currentUser = auth.currentUser
         signedIn.value = currentUser != null
@@ -167,6 +170,10 @@ class LCViewModel @Inject constructor(
          signedIn.value = false
         userData.value = null
         eventMutableState.value = Events("Logged out")
+    }
+
+    fun addchat(it: String) {
+
     }
 
 

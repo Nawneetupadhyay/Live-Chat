@@ -82,3 +82,8 @@ fun CheckSignIn(navController: NavController, vm: LCViewModel) {
     }
 }
 
+@Composable
+fun TitleText(title: String) {
+
+}
+
