@@ -2,14 +2,21 @@ package com.example.livechat
 
 import android.net.Uri
 import android.util.Log
+import androidx.collection.emptyLongSet
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
+import com.example.livechat.data.CHATS
 import com.example.livechat.data.ChatData
+import com.example.livechat.data.ChatUser
 import com.example.livechat.data.Events
 import com.example.livechat.data.USER_NODE
 import com.example.livechat.data.UserData
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.toObject
+import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
@@ -27,6 +34,7 @@ class LCViewModel @Inject constructor(
     var signedIn = mutableStateOf(false)
     val userData = mutableStateOf<UserData?>(null)
     val chats = mutableStateOf<List<ChatData>>(listOf())
+
     init {
         val currentUser = auth.currentUser
         signedIn.value = currentUser != null
@@ -56,6 +64,31 @@ class LCViewModel @Inject constructor(
         }
     }
 
+    fun populateChats()
+    {
+        inProcessChat.value = true
+        db.collection(CHATS).where(
+            Filter.or(
+                Filter.equalTo("user1.userId", userData.value?.userId),
+                Filter.equalTo("user2.userId", userData.value?.userId)
+
+        )).addSnapshotListener{
+            value, error ->
+            if(error!= null)
+            {
+                if(value!= null)
+                {
+                    chats.value = value.documents.mapNotNull {
+                        it.toObject<ChatData>()
+                    }
+                    inProcessChat.value = false
+                }
+            }
+
+        }
+    }
+
+
     fun signUp(name: String, number: String, email: String, password: String) {
         inProgression.value = true
         if (name.isEmpty() || number.isEmpty() || email.isEmpty() || password.isEmpty()) {
@@ -83,7 +116,7 @@ class LCViewModel @Inject constructor(
 
     }
 
-     fun createOrUpdateProfile(
+    fun createOrUpdateProfile(
         name: String? = null,
         number: String? = null,
         image: String? = null
@@ -129,9 +162,11 @@ class LCViewModel @Inject constructor(
                 val user = value.toObject(UserData::class.java)
                 userData.value = user
                 inProgression.value = false
+                populateChats()
             }
         }
     }
+
     fun handelException(exception: Exception, customMsg: String = "") {
         Log.e("live chat", "live chat exception", exception)
         exception.printStackTrace()
@@ -142,7 +177,7 @@ class LCViewModel @Inject constructor(
     }
 
     fun uploadProfileImage(uri: Uri) {
-        uploadImage(uri){
+        uploadImage(uri) {
             createOrUpdateProfile(image = it.toString())
         }
 
@@ -166,15 +201,64 @@ class LCViewModel @Inject constructor(
     }
 
     fun logout() {
-            auth.signOut()
-         signedIn.value = false
+        auth.signOut()
+        signedIn.value = false
         userData.value = null
         eventMutableState.value = Events("Logged out")
     }
 
-    fun addchat(it: String) {
+    fun addchat(number: String) {
+        if (number.isEmpty() || !number.isDigitsOnly()) {
+            handelException(Exception("Please enter a valid number"))
+        } else {
+            db.collection(CHATS).where(
+                Filter.or(
+                    Filter.and(
+                        Filter.equalTo("user1.number", number),
+                        Filter.equalTo("user2,number", userData.value?.number)
+                    ),
+                    Filter.and(
+                        Filter.equalTo("user1.number", userData.value?.number),
+                        Filter.equalTo("user2,number", number)
+                    )
+                )
+            ).get().addOnSuccessListener {
+                if (it.isEmpty) {
+                    db.collection(USER_NODE).whereEqualTo("number", number).get()
+                        .addOnSuccessListener {
+                            if (it.isEmpty) {
+                                handelException(Exception("nuber not found"))
+                            } else {
+                                var chatPartners = it.toObjects<UserData>()[0]
+                                val id = db.collection(CHATS).document().id
+                                val chat = ChatData(
+                                    chatId = id,
+                                    ChatUser(
+                                        userData.value?.userId,
+                                        userData.value?.name,
+                                        userData.value?.imageUrl,
+                                        userData.value?.number
+                                    ), ChatUser(
+                                        chatPartners.userId,
+                                        chatPartners.name,
+                                        chatPartners.imageUrl,
+                                        chatPartners.number
+                                    )
+                                )
+                                db.collection(CHATS).document(id).set(chat)
+
+                            }
+                        }.addOnFailureListener {
+                            handelException(it)
+                        }
+
+                } else {
+                    handelException(Exception("Chat already exists"))
+                }
+            }
+
+
+        }
 
     }
-
-
 }
