@@ -10,15 +10,20 @@ import com.example.livechat.data.CHATS
 import com.example.livechat.data.ChatData
 import com.example.livechat.data.ChatUser
 import com.example.livechat.data.Events
+import com.example.livechat.data.MESSAGE
+import com.example.livechat.data.Message
+import com.example.livechat.data.Status
 import com.example.livechat.data.USER_NODE
 import com.example.livechat.data.UserData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
 
@@ -34,6 +39,14 @@ class LCViewModel @Inject constructor(
     var signedIn = mutableStateOf(false)
     val userData = mutableStateOf<UserData?>(null)
     val chats = mutableStateOf<List<ChatData>>(listOf())
+    val chatMessages = mutableStateOf<List<Message>>(listOf())
+
+    val inProgressChatMessages = mutableStateOf(false)
+
+    var currentChatMessageListener : ListenerRegistration? = null
+
+    val status = mutableStateOf<List<Status>>(listOf())
+    val inProgressStatus = mutableStateOf(false)
 
     init {
         val currentUser = auth.currentUser
@@ -64,6 +77,39 @@ class LCViewModel @Inject constructor(
         }
     }
 
+    fun onSendReply(message: String, chatId: String)
+    {
+        val time = Calendar.getInstance().time.toString()
+        val msg = Message(userData.value?.userId, message, time)
+        db.collection(CHATS).document(chatId).collection(MESSAGE).document().set(message)
+    }
+
+
+    fun populateMessages(chatId: String)
+    {
+        inProgressChatMessages.value = true
+        currentChatMessageListener = db.collection(CHATS).document(chatId).collection(MESSAGE).addSnapshotListener{value, error ->
+
+            if(error!= null){
+                handelException(error)
+
+
+            }
+
+            if(value != null)
+            {
+                chatMessages.value = value.documents.mapNotNull {
+                    it.toObject<Message>()
+                }
+            }
+        }
+
+    }
+
+    fun depopulateMessages(){
+        currentChatMessageListener?.remove()
+        chatMessages.value = listOf()
+    }
     fun populateChats()
     {
         inProcessChat.value = true
@@ -207,6 +253,8 @@ class LCViewModel @Inject constructor(
         signedIn.value = false
         userData.value = null
         eventMutableState.value = Events("Logged out")
+        depopulateMessages()
+        currentChatMessageListener?.remove()
     }
 
     fun addchat(number: String) {
