@@ -76,13 +76,15 @@ class LCViewModel @Inject constructor(
             value, error ->
             if(error!= null)
             {
-                if(value!= null)
-                {
-                    chats.value = value.documents.mapNotNull {
-                        it.toObject<ChatData>()
-                    }
-                    inProcessChat.value = false
+               handelException(error)
+            }
+
+            if(value!= null)
+            {
+                chats.value = value.documents.mapNotNull {
+                    it.toObject<ChatData>()
                 }
+                inProcessChat.value = false
             }
 
         }

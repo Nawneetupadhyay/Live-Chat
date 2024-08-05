@@ -27,8 +27,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.livechat.CommonProgressBar
+import com.example.livechat.CommonRow
+import com.example.livechat.DestinationScreens
 import com.example.livechat.LCViewModel
 import com.example.livechat.TitleText
+import com.example.livechat.navigateTo
 
 @Composable
 fun ChatScreen(navController: NavController, vm: LCViewModel) {
@@ -77,6 +80,16 @@ fun ChatScreen(navController: NavController, vm: LCViewModel) {
                         items(chats){
                             chat ->
                             val chatUser = if(chat.user1.userId == usrData?.userId) chat.user2 else chat.user1
+                            chat.chatId?.let{
+                                CommonRow(imageUrl = chatUser.imageUrl, name = chatUser.name) {
+
+                                    navigateTo(
+                                        navController,
+                                        DestinationScreens.SingleChat.createRoute(chatId = it)
+                                    )
+
+                                }
+                            }
                         }
 
                     }

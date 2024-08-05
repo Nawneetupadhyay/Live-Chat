@@ -18,6 +18,7 @@ import com.example.livechat.screens.ChatScreen
 import com.example.livechat.screens.LoginScreen
 import com.example.livechat.screens.ProfileScreen
 import com.example.livechat.screens.SignUpScreen
+import com.example.livechat.screens.SingleChatScreen
 import com.example.livechat.screens.StatusScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -79,6 +80,12 @@ val navController = rememberNavController()
             }
             composable(DestinationScreens.Profile.route){
                 ProfileScreen(navController,vm)
+            }
+            composable(DestinationScreens.SingleChat.route){
+
+                val chatId = it.arguments?.getString("chatId")
+                chatId?.let { it1 -> SingleChatScreen(navController,vm,it1) }
+
             }
         }
     }
